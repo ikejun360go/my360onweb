@@ -1,0 +1,1418 @@
+<!--
+/**
+ * 360 Image DEEP HACK 360onWeb
+ * 
+ * @description 360イメージを編集するWebアプリケーション
+ * @author いけだじゅんじ
+ * @version 1k edit1k save4k Clear D&D XYmove
+ * @date 20250801
+ * @license Public Domain - 再配布、改変自由、一切の制限なし
+ * @disclaimer 
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+ *   IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF THIS SOFTWARE.
+ *   このソフトウェアは無保証で提供され、作者は一切の責任を負いません。
+ *   - メモリ不足によるブラウザクラッシュの可能性があります
+ *   - 処理結果の品質は保証されません
+ *   - 重要なデータは事前にバックアップしてください
+ *   - 本ソフトウェアの使用は自己責任でお願いします
+ */
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360ImageEditor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 24px;
+        }
+
+        .upload-area {
+            border: 3px dashed #4CAF50;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #45a049;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .upload-area.dragover {
+            border-color: #2196F3;
+            background: rgba(33,150,243,0.2);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .upload-btn:hover {
+            background: #45a049;
+        }
+
+        .main-content {
+            display: none;
+        }
+
+        .editor-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .canvas-container {
+            flex: 1;
+            text-align: center;
+        }
+
+        .canvas-wrapper {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 100%;
+            height: auto;
+            touch-action: none;
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls {
+            width: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #f0f0f0;
+        }
+
+        .label-text {
+            text-align: left;
+        }
+
+        .value-display {
+            font-size: 14px;
+            color: #ddd;
+            text-align: right;
+            min-width: 70px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .value-display:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        .value-input {
+            font-size: 14px;
+            color: white;
+            text-align: right;
+            min-width: 70px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            padding: 2px 6px;
+            outline: none;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #4CAF50, #2196F3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .mode-toggle {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .toggle-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .download-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .mode-indicator {
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .touch-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            display: none;
+        }
+
+        /* 縦向き（ポートレート）のレイアウト */
+        @media screen and (orientation: portrait) {
+            .container {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                margin: 0 auto;
+            }
+            
+            .upload-area {
+                width: 100% !important;
+                margin-bottom: 20px;
+                box-sizing: border-box;
+            }
+            
+            .editor-container {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .canvas-container {
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+            
+            .controls {
+                width: 100% !important;
+                margin: 0;
+                box-sizing: border-box;
+            }
+            
+            .canvas-wrapper {
+                padding: 15px;
+                box-sizing: border-box;
+            }
+            
+            .controls {
+                padding: 20px;
+                box-sizing: border-box;
+            }
+        }
+
+        /* 横向き（ランドスケープ）のレイアウト */
+        @media screen and (orientation: landscape) {
+            .container {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .upload-area {
+                width: 100%;
+                margin-bottom: 20px;
+                order: -1;
+            }
+            
+            .editor-container {
+                display: flex;
+                flex-direction: row;
+                gap: 20px;
+            }
+            
+            .canvas-container {
+                flex: 1;
+                width: 50%;
+            }
+            
+            .controls {
+                flex: 1;
+                width: 50%;
+                margin: 0;
+            }
+        }
+
+        /* 小さな画面での調整 */
+        @media (max-width: 768px) {
+            .editor-container {
+                gap: 10px;
+            }
+            
+            .canvas-wrapper {
+                padding: 15px;
+            }
+            
+            .controls {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="upload-area" id="uploadArea">
+            360onWeb
+            <button class="upload-btn" onclick="resetControlsAndSelectFile()">
+                🖼️ +360
+            </button>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="main-content" id="mainContent">
+            <div class="editor-container">
+                <div class="canvas-container">
+                    <div class="canvas-wrapper">
+                        <canvas id="canvas" width="512" height="512"></canvas>
+                        <div class="touch-indicator" id="touchIndicator">Move Center</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span class="label-text">🔍 Zoom 拡大縮小</span>
+                            <input type="text" class="value-input" id="scaleInput" value="2.0" style="display: none;">
+                            <span class="value-display" id="scaleValue">2.00</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="scaleSlider" min="0.1" max="3.9" step="0.1" value="2">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span class="label-text">↕️ Up Down 上下</span>
+                            <input type="text" class="value-input" id="pitchInput" value="0°" style="display: none;">
+                            <span class="value-display" id="pitchValue">0.00°</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="pitchSlider" min="-180" max="180" step="1" value="0">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span class="label-text">↔️ Left Right 左右</span>
+                            <input type="text" class="value-input" id="rollInput" value="0°" style="display: none;">
+                            <span class="value-display" id="rollValue">0.00°</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="rollSlider" min="-180" max="180" step="1" value="0" style="transform: scaleX(-1);">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label">
+                            <span class="label-text">🔄 Rotate 回転</span>
+                            <input type="text" class="value-input" id="yawInput" value="0°" style="display: none;">
+                            <span class="value-display" id="yawValue">0.00°</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="yawSlider" min="-180" max="180" step="1" value="0" style="transform: scaleX(-1);">
+                        </div>
+                    </div>
+
+                    <div class="control-group" id="centerXGroup" style="display: none;">
+                        <div class="control-label">
+                            <span class="label-text">↔️ Center X 中心横</span>
+                            <input type="text" class="value-input" id="centerXInput" value="0.00" style="display: none;">
+                            <span class="value-display" id="centerXValue">0.00</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="centerXSlider" min="-1" max="1" step="0.01" value="0">
+                        </div>
+                    </div>
+
+                    <div class="control-group" id="centerYGroup" style="display: none;">
+                        <div class="control-label">
+                            <span class="label-text">↕️ Center Y 中心縦</span>
+                            <input type="text" class="value-input" id="centerYInput" value="0.00" style="display: none;">
+                            <span class="value-display" id="centerYValue">0.00</span>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" id="centerYSlider" min="-1" max="1" step="0.01" value="0">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="editModeSelect">🎚 Edit type</label>
+                        <select id="editModeSelect" style="width: 100%; padding: 8px; border-radius: 5px; border: none; background: rgba(255,255,255,0.2); color: white; font-size: 14px;">
+                            <option value="little_planet" style="background: #333; color: white;">Little Planet</option>
+                            <option value="rabbit_hole" style="background: #333; color: white;">Rabbit Hole</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="formatSelect">🎨 Format type</label>
+                        <select id="formatSelect" style="width: 100%; padding: 8px; border-radius: 5px; border: none; background: rgba(255,255,255,0.2); color: white; font-size: 14px;">
+                            <option value="jpeg" style="background: #333; color: white;">JPG 80%</option>
+                            <option value="png" style="background: #333; color: white;">PNG</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="resolutionSelect">📐 Pixel size</label>
+                        <select id="resolutionSelect" style="width: 100%; padding: 8px; border-radius: 5px; border: none; background: rgba(255,255,255,0.2); color: white; font-size: 14px;">
+                            <option value="512" style="background: #333; color: white;">512×512 (Preview)</option>
+                            <option value="2048" style="background: #333; color: white;">2048×2048 (2K)</option>
+                            <option value="4096" style="background: #333; color: white;">4096×4096 (4K)</option>
+                        </select>
+                    </div>
+
+                    <button class="download-btn" id="downloadBtn">📂 Download</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loadingText">Processing image...</div>
+        </div>
+    </div>
+
+    <script>
+        let originalImage = null;
+        let workingImage = null;  // 編集用 2048x1024
+        let downloadImage = null; // ダウンロード用 4096x2048
+        let isLittlePlanet = true;
+
+        // 中心位置のオフセット
+        let centerOffsetX = 0;
+        let centerOffsetY = 0;
+
+        window.addEventListener('load', function() {
+            loadSampleImage();
+            
+            // デバイス判定でPC用中心調整スライダーの表示を決定
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            if (!isTouchDevice) {
+                document.getElementById('centerXGroup').style.display = 'block';
+                document.getElementById('centerYGroup').style.display = 'block';
+            }
+        });
+
+        function showLoading(text) {
+            const overlay = document.getElementById('loadingOverlay');
+            const loadingText = document.getElementById('loadingText');
+            loadingText.textContent = text;
+            overlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = 'none';
+        }
+
+        function loadSampleImage() {
+            // ローカル環境では最初から画像選択モードに
+            if (location.protocol === 'file:') {
+                console.log('Local environment detected. Sample image loading skipped.');
+                return;
+            }
+            
+            // オンライン環境では従来通り
+            const sampleImage = new Image();
+            sampleImage.onload = function() {
+                originalImage = sampleImage;
+                createWorkingImages();
+            };
+            sampleImage.onerror = function() {
+                console.log('sample.jpg is not available. select 360 image');
+            };
+            sampleImage.src = './sample.jpg';
+        }
+
+        // ボタンクリック時にコントロールをリセットしてからファイル選択を開く関数
+        function resetControlsAndSelectFile() {
+            resetControls();
+            document.getElementById('fileInput').click();
+        }
+        
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const mainContent = document.getElementById('mainContent');
+        const touchIndicator = document.getElementById('touchIndicator');
+
+        const scaleSlider = document.getElementById('scaleSlider');
+        const pitchSlider = document.getElementById('pitchSlider');
+        const rollSlider = document.getElementById('rollSlider');
+        const yawSlider = document.getElementById('yawSlider');
+        const editModeSelect = document.getElementById('editModeSelect');
+        const resolutionSelect = document.getElementById('resolutionSelect');
+        const formatSelect = document.getElementById('formatSelect');
+
+        const scaleValue = document.getElementById('scaleValue');
+        const pitchValue = document.getElementById('pitchValue');
+        const rollValue = document.getElementById('rollValue');
+        const yawValue = document.getElementById('yawValue');
+        const centerXValue = document.getElementById('centerXValue');
+        const centerYValue = document.getElementById('centerYValue');
+
+        const scaleInput = document.getElementById('scaleInput');
+        const pitchInput = document.getElementById('pitchInput');
+        const rollInput = document.getElementById('rollInput');
+        const yawInput = document.getElementById('yawInput');
+        const centerXInput = document.getElementById('centerXInput');
+        const centerYInput = document.getElementById('centerYInput');
+
+        // 中心位置調整スライダー
+        const centerXSlider = document.getElementById('centerXSlider');
+        const centerYSlider = document.getElementById('centerYSlider');
+
+        let isDragging = false;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let lastPinchDistance = 0;
+        let isPinching = false;
+        let isMovingCenter = false;
+        let tempScale = parseFloat(scaleSlider.value);
+        let tempPitch = parseFloat(pitchSlider.value);
+        let tempRoll = parseFloat(rollSlider.value);
+        let tempYaw = parseFloat(yawSlider.value);
+
+        fileInput.addEventListener('change', handleFile);
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                resetControls(); // ドラッグ&ドロップ時もリセット
+                processFile(files[0]);
+            }
+        });
+
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processFile(file);
+            }
+        }
+
+        function processFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Choose image file!');
+                return;
+            }
+
+            showLoading('Loading image...');
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    console.log('Original image loaded: ' + originalImage.width + '×' + originalImage.height);
+                    createWorkingImages();
+                };
+                originalImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function createWorkingImages() {
+            if (!originalImage) return;
+
+            showLoading('Creating working images...');
+
+            setTimeout(function() {
+                // 編集用の2048x1024画像を作成
+                const workingCanvas = document.createElement('canvas');
+                const workingCtx = workingCanvas.getContext('2d');
+                workingCanvas.width = 1024;
+                workingCanvas.height = 512;
+                
+                workingCtx.drawImage(originalImage, 0, 0, 1024, 512);
+                
+                workingImage = new Image();
+                workingImage.onload = function() {
+                    console.log('Working image created: ' + workingImage.width + '×' + workingImage.height);
+                    
+                    // ダウンロード用の4096x2048画像を作成
+                    const downloadCanvas = document.createElement('canvas');
+                    const downloadCtx = downloadCanvas.getContext('2d');
+                    downloadCanvas.width = 4096;
+                    downloadCanvas.height = 2048;
+                    
+                    downloadCtx.drawImage(originalImage, 0, 0, 4096, 2048);
+                    
+                    downloadImage = new Image();
+                    downloadImage.onload = function() {
+                        console.log('Download image created: ' + downloadImage.width + '×' + downloadImage.height);
+                        hideLoading();
+                        mainContent.style.display = 'block';
+                        render();
+                    };
+                    downloadImage.src = downloadCanvas.toDataURL();
+                };
+                workingImage.src = workingCanvas.toDataURL();
+            }, 100);
+        }
+
+        function resetControls() {
+            scaleSlider.value = '2';
+            pitchSlider.value = '0';
+            rollSlider.value = '0';
+            yawSlider.value = '0';
+            scaleValue.textContent = '2.00';
+            pitchValue.textContent = '0.00°';
+            rollValue.textContent = '0.00°';
+            yawValue.textContent = '0.00°';
+            scaleInput.value = '2.00';
+            pitchInput.value = '0.00';
+            rollInput.value = '0.00';
+            yawInput.value = '0.00';
+            tempScale = 2;
+            tempPitch = 0;
+            tempRoll = 0;
+            tempYaw = 0;
+            
+            // 中心位置もリセット
+            centerOffsetX = 0;
+            centerOffsetY = 0;
+            
+            // PC用中心調整スライダーもリセット
+            if (centerXSlider && centerYSlider) {
+                centerXSlider.value = '0';
+                centerYSlider.value = '0';
+                centerXValue.textContent = '0.00';
+                centerYValue.textContent = '0.00';
+                centerXInput.value = '0.00';
+                centerYInput.value = '0.00';
+            }
+            
+            // 画像が既に読み込まれている場合は再描画
+            if (workingImage) {
+                render();
+            }
+        }
+
+        scaleSlider.addEventListener('input', function() {
+            tempScale = parseFloat(scaleSlider.value);
+            scaleValue.textContent = tempScale.toFixed(2);
+            render();
+        });
+
+        pitchSlider.addEventListener('input', function() {
+            tempPitch = parseFloat(pitchSlider.value);
+            pitchValue.textContent = tempPitch.toFixed(2) + '°';
+            render();
+        });
+
+        rollSlider.addEventListener('input', function() {
+            tempRoll = parseFloat(rollSlider.value);
+            rollValue.textContent = tempRoll.toFixed(2) + '°';
+            render();
+        });
+
+        yawSlider.addEventListener('input', function() {
+            tempYaw = parseFloat(yawSlider.value);
+            yawValue.textContent = tempYaw.toFixed(2) + '°';
+            render();
+        });
+
+        // PC用中心調整スライダーのイベントリスナー
+        if (centerXSlider && centerYSlider) {
+            centerXSlider.addEventListener('input', function() {
+                centerOffsetX = -parseFloat(centerXSlider.value); // スライダーの動きを逆に
+                centerXValue.textContent = parseFloat(centerXSlider.value).toFixed(2); // 表示は元の値
+                render();
+            });
+
+            centerYSlider.addEventListener('input', function() {
+                centerOffsetY = parseFloat(centerYSlider.value);
+                centerYValue.textContent = centerOffsetY.toFixed(2);
+                render();
+            });
+        }
+
+        editModeSelect.addEventListener('change', function() {
+            const selectedMode = editModeSelect.value;
+            isLittlePlanet = (selectedMode === 'little_planet');
+            render();
+        });
+
+        scaleValue.addEventListener('click', function() {
+            showInput(scaleValue, scaleInput, scaleSlider, false);
+        });
+
+        pitchValue.addEventListener('click', function() {
+            showInput(pitchValue, pitchInput, pitchSlider, true);
+        });
+
+        rollValue.addEventListener('click', function() {
+            showInput(rollValue, rollInput, rollSlider, true);
+        });
+
+        yawValue.addEventListener('click', function() {
+            showInput(yawValue, yawInput, yawSlider, true);
+        });
+
+        // PC用中心調整スライダーの値クリックイベント
+        if (centerXValue && centerYValue) {
+            centerXValue.addEventListener('click', function() {
+                showInput(centerXValue, centerXInput, centerXSlider, false);
+            });
+
+            centerYValue.addEventListener('click', function() {
+                showInput(centerYValue, centerYInput, centerYSlider, false);
+            });
+        }
+
+        scaleInput.addEventListener('blur', function() {
+            hideInput(scaleInput, scaleValue, scaleSlider, false);
+        });
+
+        scaleInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                hideInput(scaleInput, scaleValue, scaleSlider, false);
+            }
+        });
+
+        pitchInput.addEventListener('blur', function() {
+            hideInput(pitchInput, pitchValue, pitchSlider, true);
+        });
+
+        pitchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                hideInput(pitchInput, pitchValue, pitchSlider, true);
+            }
+        });
+
+        rollInput.addEventListener('blur', function() {
+            hideInput(rollInput, rollValue, rollSlider, true);
+        });
+
+        rollInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                hideInput(rollInput, rollValue, rollSlider, true);
+            }
+        });
+
+        yawInput.addEventListener('blur', function() {
+            hideInput(yawInput, yawValue, yawSlider, true);
+        });
+
+        yawInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                hideInput(yawInput, yawValue, yawSlider, true);
+            }
+        });
+
+        // PC用中心調整スライダーの入力フィールドイベント
+        if (centerXInput && centerYInput) {
+            centerXInput.addEventListener('blur', function() {
+                hideInputCenter(centerXInput, centerXValue, centerXSlider, 'X');
+            });
+
+            centerXInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    hideInputCenter(centerXInput, centerXValue, centerXSlider, 'X');
+                }
+            });
+
+            centerYInput.addEventListener('blur', function() {
+                hideInputCenter(centerYInput, centerYValue, centerYSlider, 'Y');
+            });
+
+            centerYInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    hideInputCenter(centerYInput, centerYValue, centerYSlider, 'Y');
+                }
+            });
+        }
+
+        function showInput(valueDisplay, input, slider, isDegree) {
+            const currentValue = isDegree ? 
+                valueDisplay.textContent.replace('°', '') : 
+                valueDisplay.textContent;
+            input.value = currentValue;
+            valueDisplay.style.display = 'none';
+            input.style.display = 'inline-block';
+            input.focus();
+            input.select();
+        }
+
+        function hideInput(input, valueDisplay, slider, isDegree) {
+            let newValue = parseFloat(input.value);
+            if (isNaN(newValue)) {
+                newValue = parseFloat(slider.value);
+            } else {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                newValue = Math.max(min, Math.min(max, newValue));
+                slider.value = newValue;
+            }
+            if (isDegree) {
+                valueDisplay.textContent = newValue.toFixed(2) + '°';
+                if (slider === pitchSlider) tempPitch = newValue;
+                else if (slider === rollSlider) tempRoll = newValue;
+                else if (slider === yawSlider) tempYaw = newValue;
+            } else {
+                valueDisplay.textContent = newValue.toFixed(2);
+                tempScale = newValue;
+            }
+            input.style.display = 'none';
+            valueDisplay.style.display = 'inline-block';
+            render();
+        }
+
+        function hideInputCenter(input, valueDisplay, slider, axis) {
+            let newValue = parseFloat(input.value);
+            if (isNaN(newValue)) {
+                newValue = parseFloat(slider.value);
+            } else {
+                const min = parseFloat(slider.min);
+                const max = parseFloat(slider.max);
+                newValue = Math.max(min, Math.min(max, newValue));
+                slider.value = newValue;
+            }
+            
+            valueDisplay.textContent = newValue.toFixed(2);
+            if (axis === 'X') {
+                centerOffsetX = -newValue; // X軸は逆に適用
+            } else if (axis === 'Y') {
+                centerOffsetY = newValue;
+            }
+            
+            input.style.display = 'none';
+            valueDisplay.style.display = 'inline-block';
+            render();
+        }
+
+        canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+        canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseleave', handleMouseUp);
+
+        function normalizeAngle(angle, min, max) {
+            const range = max - min;
+            let normalized = angle % (range * 2);
+            if (normalized > max) normalized -= range * 2;
+            else if (normalized < min) normalized += range * 2;
+            return Math.max(min, Math.min(max, normalized));
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+                isPinching = false;
+                isMovingCenter = false;
+                tempPitch = parseFloat(pitchSlider.value);
+                tempRoll = parseFloat(rollSlider.value);
+                tempYaw = parseFloat(yawSlider.value);
+            } else if (e.touches.length === 2) {
+                isPinching = true;
+                isDragging = false;
+                isMovingCenter = false;
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                lastPinchDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+                tempScale = parseFloat(scaleSlider.value);
+            } else if (e.touches.length === 3) {
+                isMovingCenter = true;
+                isDragging = false;
+                isPinching = false;
+                lastTouchX = e.touches[0].clientX;
+                lastTouchY = e.touches[0].clientY;
+                touchIndicator.style.display = 'block';
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (isDragging && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastTouchX;
+                const deltaY = touch.clientY - lastTouchY;
+
+                tempRoll -= deltaX * 0.5;
+                tempPitch += deltaY * 0.5;
+                tempYaw -= deltaX * 0.5;
+
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+                render();
+            } else if (isPinching && e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const currentDistance = Math.sqrt(
+                    Math.pow(touch2.clientX - touch1.clientX, 2) +
+                    Math.pow(touch2.clientY - touch1.clientY, 2)
+                );
+
+                const scaleChange = (currentDistance - lastPinchDistance) * 0.01;
+                tempScale = Math.max(0.1, Math.min(3.9, tempScale + scaleChange));
+                lastPinchDistance = currentDistance;
+                render();
+            } else if (isMovingCenter && e.touches.length === 3) {
+                const touch = e.touches[0];
+                const deltaX = touch.clientX - lastTouchX;
+                const deltaY = touch.clientY - lastTouchY;
+
+                centerOffsetX -= deltaX * 0.005;
+                centerOffsetY -= deltaY * 0.005;
+
+                // 中心移動の範囲制限
+                centerOffsetX = Math.max(-1, Math.min(1, centerOffsetX));
+                centerOffsetY = Math.max(-1, Math.min(1, centerOffsetY));
+
+                lastTouchX = touch.clientX;
+                lastTouchY = touch.clientY;
+                render();
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (isDragging) {
+                tempPitch = normalizeAngle(tempPitch, -180, 180);
+                tempRoll = normalizeAngle(tempRoll, -180, 180);
+                tempYaw = normalizeAngle(tempYaw, -180, 180);
+                pitchSlider.value = tempPitch;
+                rollSlider.value = tempRoll;
+                yawSlider.value = tempYaw;
+                pitchValue.textContent = tempPitch.toFixed(2) + '°';
+                rollValue.textContent = tempRoll.toFixed(2) + '°';
+                yawValue.textContent = tempYaw.toFixed(2) + '°';
+                render();
+            } else if (isPinching) {
+                scaleSlider.value = tempScale;
+                scaleValue.textContent = tempScale.toFixed(2);
+                render();
+            } else if (isMovingCenter) {
+                touchIndicator.style.display = 'none';
+            }
+            isDragging = false;
+            isPinching = false;
+            isMovingCenter = false;
+        }
+
+        function handleMouseDown(e) {
+            isDragging = true;
+            lastTouchX = e.clientX;
+            lastTouchY = e.clientY;
+            tempPitch = parseFloat(pitchSlider.value);
+            tempRoll = parseFloat(rollSlider.value);
+            tempYaw = parseFloat(yawSlider.value);
+        }
+
+        function handleMouseMove(e) {
+            if (!isDragging) return;
+
+            const deltaX = e.clientX - lastTouchX;
+            const deltaY = e.clientY - lastTouchY;
+
+            tempRoll -= deltaX * 0.5;
+            tempPitch += deltaY * 0.5;
+            tempYaw -= deltaX * 0.5;
+
+            lastTouchX = e.clientX;
+            lastTouchY = e.clientY;
+            render();
+        }
+
+        function handleMouseUp(e) {
+            if (isDragging) {
+                tempPitch = normalizeAngle(tempPitch, -180, 180);
+                tempRoll = normalizeAngle(tempRoll, -180, 180);
+                tempYaw = normalizeAngle(tempYaw, -180, 180);
+                pitchSlider.value = tempPitch;
+                rollSlider.value = tempRoll;
+                yawSlider.value = tempYaw;
+                pitchValue.textContent = tempPitch.toFixed(2) + '°';
+                rollValue.textContent = tempRoll.toFixed(2) + '°';
+                yawValue.textContent = tempYaw.toFixed(2) + '°';
+                render();
+            }
+            isDragging = false;
+        }
+
+        function sphericalToCartesian(theta, phi) {
+            const x = Math.cos(phi) * Math.cos(theta);
+            const y = Math.cos(phi) * Math.sin(theta);
+            const z = Math.sin(phi);
+            return [x, y, z];
+        }
+
+        function cartesianToSpherical(x, y, z) {
+            const theta = Math.atan2(y, x);
+            const phi = Math.asin(Math.max(-1, Math.min(1, z)));
+            return [theta, phi];
+        }
+
+        function rotatePoint(x, y, z, pitch, roll, yaw) {
+            const cp = Math.cos(pitch);
+            const sp = Math.sin(pitch);
+            const cr = Math.cos(roll);
+            const sr = Math.sin(roll);
+            const cy = Math.cos(yaw);
+            const sy = Math.sin(yaw);
+
+            const rx = x * (cy * cr - sy * sp * sr) + y * (-sy * cp) + z * (cy * sr + sy * sp * cr);
+            const ry = x * (sy * cr + cy * sp * sr) + y * (cy * cp) + z * (sy * sr - cy * sp * cr);
+            const rz = x * (-cp * sr) + y * sp + z * (cp * cr);
+
+            return [rx, ry, rz];
+        }
+
+        function render() {
+            if (!workingImage) return;
+
+            const scale = tempScale;
+            let pitch = (tempPitch * Math.PI) / 180;
+            const roll = (tempRoll * Math.PI) / 180;
+            const yaw = (tempYaw * Math.PI) / 180;
+
+            if (!isLittlePlanet) {
+                pitch += Math.PI;
+            }
+
+            const size = 512;
+            canvas.width = size;
+            canvas.height = size;
+
+            renderAtSize(size, scale, pitch, roll, yaw, workingImage);
+        }
+
+        function renderAtSize(size, scale, pitch, roll, yaw, sourceImage) {
+            const imageData = ctx.createImageData(size, size);
+            const data = imageData.data;
+
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = sourceImage.width;
+            tempCanvas.height = sourceImage.height;
+            tempCtx.drawImage(sourceImage, 0, 0);
+            const sourceData = tempCtx.getImageData(0, 0, sourceImage.width, sourceImage.height);
+
+            for (let y = 0; y < size; y++) {
+                for (let x = 0; x < size; x++) {
+                    // 中心位置のオフセットを適用
+                    const nx = (x / (size - 1)) * 2 - 1 + centerOffsetX;
+                    const ny = (y / (size - 1)) * 2 - 1 + centerOffsetY;
+
+                    const r = Math.sqrt(nx * nx + ny * ny);
+                    const angle = Math.atan2(ny, nx);
+                    
+                    const phi = Math.PI/2 - 2 * Math.atan(r * (4 - scale));
+                    const theta = angle;
+                    const cartesian = sphericalToCartesian(theta, phi);
+
+                    const rotated = rotatePoint(cartesian[0], cartesian[1], cartesian[2], pitch, roll, yaw);
+                    const spherical = cartesianToSpherical(rotated[0], rotated[1], rotated[2]);
+
+                    const u = (spherical[0] + Math.PI) / (2 * Math.PI);
+                    const v = (spherical[1] + Math.PI / 2) / Math.PI;
+
+                    const imgX = Math.floor(u * sourceImage.width) % sourceImage.width;
+                    const imgY = Math.floor(v * sourceImage.height) % sourceImage.height;
+
+                    if (imgX >= 0 && imgX < sourceImage.width && imgY >= 0 && imgY < sourceImage.height) {
+                        const sourceIndex = (imgY * sourceImage.width + imgX) * 4;
+                        const targetIndex = (y * size + x) * 4;
+
+                        data[targetIndex] = sourceData.data[sourceIndex];
+                        data[targetIndex + 1] = sourceData.data[sourceIndex + 1];
+                        data[targetIndex + 2] = sourceData.data[sourceIndex + 2];
+                        data[targetIndex + 3] = 255;
+                    }
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent);
+        }
+
+        function processImageInChunks(canvas, ctx, outputSize, scale, pitch, roll, yaw, chunkSize, currentY, callback) {
+            const endY = Math.min(currentY + chunkSize, outputSize);
+            
+            const progress = Math.round((currentY / outputSize) * 100);
+            document.getElementById('downloadBtn').textContent = '🔄 ' + progress + '%';
+
+            if (!processImageInChunks.sourceData) {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = downloadImage.width;  // 4096x2048のダウンロード用画像を使用
+                tempCanvas.height = downloadImage.height;
+                tempCtx.drawImage(downloadImage, 0, 0);
+                processImageInChunks.sourceData = tempCtx.getImageData(0, 0, downloadImage.width, downloadImage.height);
+            }
+
+            const sourceData = processImageInChunks.sourceData;
+            const chunkHeight = endY - currentY;
+            const imageData = ctx.createImageData(outputSize, chunkHeight);
+            const data = imageData.data;
+
+            for (let y = 0; y < chunkHeight; y++) {
+                for (let x = 0; x < outputSize; x++) {
+                    const actualY = currentY + y;
+                    // 中心位置のオフセットを適用
+                    const nx = (x / (outputSize - 1)) * 2 - 1 + centerOffsetX;
+                    const ny = (actualY / (outputSize - 1)) * 2 - 1 + centerOffsetY;
+
+                    const r = Math.sqrt(nx * nx + ny * ny);
+                    const angle = Math.atan2(ny, nx);
+                    
+                    const phi = Math.PI/2 - 2 * Math.atan(r * (4 - scale));
+                    const theta = angle;
+                    const cartesian = sphericalToCartesian(theta, phi);
+
+                    const rotated = rotatePoint(cartesian[0], cartesian[1], cartesian[2], pitch, roll, yaw);
+                    const spherical = cartesianToSpherical(rotated[0], rotated[1], rotated[2]);
+
+                    const u = (spherical[0] + Math.PI) / (2 * Math.PI);
+                    const v = (spherical[1] + Math.PI / 2) / Math.PI;
+
+                    const imgX = Math.floor(u * downloadImage.width) % downloadImage.width;  // ダウンロード用画像のサイズ
+                    const imgY = Math.floor(v * downloadImage.height) % downloadImage.height;
+
+                    if (imgX >= 0 && imgX < downloadImage.width && imgY >= 0 && imgY < downloadImage.height) {
+                        const sourceIndex = (imgY * downloadImage.width + imgX) * 4;
+                        const targetIndex = (y * outputSize + x) * 4;
+
+                        data[targetIndex] = sourceData.data[sourceIndex];
+                        data[targetIndex + 1] = sourceData.data[sourceIndex + 1];
+                        data[targetIndex + 2] = sourceData.data[sourceIndex + 2];
+                        data[targetIndex + 3] = 255;
+                    }
+                }
+            }
+
+            ctx.putImageData(imageData, 0, currentY);
+
+            if (endY < outputSize) {
+                setTimeout(function() {
+                    processImageInChunks(canvas, ctx, outputSize, scale, pitch, roll, yaw, chunkSize, endY, callback);
+                }, 10);
+            } else {
+                delete processImageInChunks.sourceData;
+                callback();
+            }
+        }
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (!downloadImage) return;
+
+            const outputSize = parseInt(resolutionSelect.value);
+            const outputFormat = formatSelect.value;
+            const scale = parseFloat(scaleSlider.value);
+            let pitch = (parseFloat(pitchSlider.value) * Math.PI) / 180;
+            const roll = (parseFloat(rollSlider.value) * Math.PI) / 180;
+            const yaw = (parseFloat(yawSlider.value) * Math.PI) / 180;
+
+            if (!isLittlePlanet) {
+                pitch += Math.PI;
+            }
+
+            const estimatedMemory = outputSize * outputSize * 4 * 3;
+            const deviceMemory = navigator.deviceMemory || 2;
+            
+            if (outputSize >= 4096 && deviceMemory < 4) {
+                if (!confirm('高解像度出力は大量のメモリを使用します。古い端末では動作が不安定になる可能性があります。続行しますか？')) {
+                    return;
+                }
+            }
+
+            console.log('Generating ' + outputSize + '×' + outputSize + ' image from download source ' + downloadImage.width + '×' + downloadImage.height + '...');
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = '🔄 Processing...';
+            downloadBtn.disabled = true;
+
+            // iOSの場合は先にカウントダウンタブを開く
+            let newWindow = null;
+            if (isIOS()) {
+                newWindow = window.open('about:blank', '_blank');
+                if (!newWindow) {
+                    alert('ポップアップがブロックされました。ブラウザの設定でポップアップを許可してください。');
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                    return;
+                }
+                
+                // カウントダウン表示（4Kは30秒、その他は15秒）
+                const countdownTime = outputSize >= 4096 ? 30 : 15;
+                const resolutionText = outputSize === 2048 ? '2K' : outputSize === 4096 ? '4K' : 'preview';
+                const modeText = isLittlePlanet ? 'little_planet' : 'rabbit_hole';
+                const filename = modeText + '_' + resolutionText;
+                
+                newWindow.document.write('<!DOCTYPE html><html><head><title>' + filename + '</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body { margin: 0; padding: 20px; background: linear-gradient(135deg, #1e3c72, #2a5298); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; color: white; } .spinner { width: 60px; height: 60px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px 0; } .back-btn { background: #007AFF; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; margin: 20px 0; cursor: pointer; transition: background 0.3s; } .back-btn:hover { background: #0056CC; } .status-line { font-size: 20px; font-weight: bold; margin: 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style></head><body><div class="spinner"></div><button class="back-btn" onclick="window.close()">Return</button><div class="status-line" id="statusLine">Processing... ' + countdownTime + '</div></body></html>');
+                
+                // カウントダウン開始
+                let countdown = countdownTime;
+                const statusElement = newWindow.document.getElementById('statusLine');
+                const countdownInterval = setInterval(function() {
+                    countdown--;
+                    if (statusElement) {
+                        if (countdown > 0) {
+                            statusElement.textContent = 'Processing... ' + countdown;
+                        } else {
+                            // カウントダウン終了時に「Processing...」のみ表示
+                            statusElement.textContent = 'Processing...';
+                            clearInterval(countdownInterval);
+                        }
+                    } else {
+                        clearInterval(countdownInterval);
+                    }
+                }, 1000);
+            }
+
+            setTimeout(function() {
+                try {
+                    const downloadCanvas = document.createElement('canvas');
+                    const downloadCtx = downloadCanvas.getContext('2d');
+                    downloadCanvas.width = outputSize;
+                    downloadCanvas.height = outputSize;
+
+                    const chunkSize = outputSize >= 4096 ? 64 : outputSize >= 2048 ? 128 : 256;
+                    
+                    processImageInChunks(downloadCanvas, downloadCtx, outputSize, scale, pitch, roll, yaw, chunkSize, 0, function() {
+                        const resolutionText = outputSize === 2048 ? '2K' : outputSize === 4096 ? '4K' : 'preview';
+                        const modeText = isLittlePlanet ? 'little_planet' : 'rabbit_hole';
+                        
+                        // 一意なファイル名の生成
+                        const now = new Date();
+                        const timestamp = now.getFullYear().toString() + 
+                                        (now.getMonth() + 1).toString().padStart(2, '0') + 
+                                        now.getDate().toString().padStart(2, '0') + '_' +
+                                        now.getHours().toString().padStart(2, '0') + 
+                                        now.getMinutes().toString().padStart(2, '0') + 
+                                        now.getSeconds().toString().padStart(2, '0');
+                        
+                        let dataURL;
+                        let fileExtension;
+                        
+                        if (outputFormat === 'jpeg') {
+                            dataURL = downloadCanvas.toDataURL('image/jpeg', 0.8);
+                            fileExtension = 'jpg';
+                        } else {
+                            dataURL = downloadCanvas.toDataURL('image/png');
+                            fileExtension = 'png';
+                        }
+                        
+                        const filename = modeText + '_' + resolutionText + '_' + timestamp + '.' + fileExtension;
+
+                        if (isIOS() && newWindow) {
+                            // 処理完了後、画像を重ねて表示
+                            const imgElement = newWindow.document.createElement('img');
+                            imgElement.src = dataURL;
+                            imgElement.alt = filename;
+                            imgElement.style.cssText = 'width: min(90vw, 80vh); height: min(90vw, 80vh); object-fit: contain; border-radius: 10px; box-shadow: 0 4px 20px rgba(255,255,255,0.1); position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; background: rgba(0,0,0,0.8); padding: 10px;';
+                            
+                            const instructionsDiv = newWindow.document.createElement('div');
+                            instructionsDiv.innerHTML = 'Download or Share: Long press the image';
+                            instructionsDiv.style.cssText = 'color: white; text-align: center; font-size: 16px; line-height: 1.5; position: absolute; top: calc(50% + min(45vw, 40vh) + 30px); left: 50%; transform: translateX(-50%); z-index: 1001;';
+                            
+                            const backBtn = newWindow.document.createElement('button');
+                            backBtn.innerHTML = 'Return';
+                            backBtn.onclick = function() { newWindow.close(); };
+                            backBtn.style.cssText = 'background: #007AFF; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s; position: absolute; top: calc(50% + min(45vw, 40vh) + 80px); left: 50%; transform: translateX(-50%); z-index: 1001;';
+                            backBtn.onmouseover = function() { this.style.background = '#0056CC'; };
+                            backBtn.onmouseout = function() { this.style.background = '#007AFF'; };
+                            
+                            newWindow.document.body.appendChild(imgElement);
+                            newWindow.document.body.appendChild(instructionsDiv);
+                            newWindow.document.body.appendChild(backBtn);
+                        } else if (!isIOS()) {
+                            const link = document.createElement('a');
+                            link.download = filename;
+                            link.href = dataURL;
+                            link.click();
+                        }
+
+                        downloadBtn.textContent = originalText;
+                        downloadBtn.disabled = false;
+                    });
+                } catch (error) {
+                    console.error('Download failed:', error);
+                    alert('ダウンロードに失敗しました。メモリ不足の可能性があります。解像度を下げて再試行してください。');
+                    if (newWindow) newWindow.close();
+                    downloadBtn.textContent = originalText;
+                    downloadBtn.disabled = false;
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
