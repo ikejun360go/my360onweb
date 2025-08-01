@@ -57,4 +57,4 @@
 ## 🙋 作者 / Author
 
 いけだじゅんじ（Junji Ikeda）  
-ご連絡は GitHub または [X / Twitter](#) までどうぞ。
+ご連絡は GitHub までどうぞ。
