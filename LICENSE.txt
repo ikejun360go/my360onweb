@@ -1,0 +1,24 @@
+Creative Commons Legal Code
+
+CC0 1.0 Universal (CC0 1.0) Public Domain Dedication
+
+Copyright (C) 2025 Junji Ikeda
+
+The person who associated a work with this deed has dedicated the work to the public domain by waiving all of their rights to the work worldwide under copyright law, including all related and neighboring rights, to the extent allowed by law.
+
+You can copy, modify, distribute and perform the work, even for commercial purposes, all without asking permission.
+
+In no event will the authors be liable for any damages arising from the use of this software.  
+This software is provided "AS IS", without warranty of any kind.
+
+---
+
+### Attribution Note (Not Required by CC0)
+
+This software's source code was generated entirely using **Claude Sonnet 4**, a large language model developed by Anthropic.  
+Prompts and supervision were provided by **Junji Ikeda**.
+
+---
+
+For more information, please visit:  
+https://creativecommons.org/publicdomain/zero/1.0/
